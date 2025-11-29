@@ -1,0 +1,187 @@
+#====================
+# Prerequisites: None
+#====================
+
+#----------------------------------------------------------------
+# About
+#   Declares PS1 helper functions to set a colorful
+#   and custom bash prompt!
+#
+#   Remember to call one of these from the calling script
+#   after they are in memory.
+#
+# See also:
+#   https://en.wikipedia.org/wiki/Bash_(Unix_shell)#Users_and_PS1
+#----------------------------------------------------------------
+
+
+#==============================================================
+# Default ~/.bashrc colors
+#==============================================================
+
+fn_prompt_default() {
+    if [ "$_COLOR_PROMPT" = yes ]; then
+        PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+    else
+        PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+    fi
+}
+
+
+#===================================================
+# Custom bash PS1: username and timestamp in prompt
+#===================================================
+
+#-----------------------------------------------
+# Initialize ANSI color codes for the prompt
+# These control colors in the terminal:
+#   \[\e[XXXX m\] = color code
+#   \[\e[00m\]    = reset to default
+#-----------------------------------------------
+
+fn_prompt_init_colors() {
+    _COLOR_OPEN='\[\e'
+    _COLOR_CYAN="$_COLOR_OPEN"'[00;36m\]'      # Cyan
+    _COLOR_BLUE="$_COLOR_OPEN"'[01;34m\]'      # Bright Blue
+    _COLOR_GREEN="$_COLOR_OPEN"'[01;32m\]'     # Bright Green
+    _COLOR_YELLOW="$_COLOR_OPEN"'[00;33m\]'    # Yellow
+    _COLOR_RESET="$_COLOR_OPEN"'[00m\]'        # Reset to default
+}
+
+#-----------------------------------------------
+# Clean up color variables after use
+# We unset them so they don't pollute the shell
+#-----------------------------------------------
+
+fn_prompt_cleanup_color_vars() {
+    unset _COLOR_OPEN
+    unset _COLOR_CYAN
+    unset _COLOR_BLUE
+    unset _COLOR_GREEN
+    unset _COLOR_YELLOW
+    unset _COLOR_RESET
+}
+
+#-----------------------------------------------
+# Build date (plain, no color)
+# Stores result in _DATE
+# Format: YYYY.MM.DD
+#-----------------------------------------------
+
+fn_prompt_build_date() {
+    if [ "$_USE_TIMESTAMP" = true ]; then
+        _DATE='\D{%Y.%m.%d} '
+    else
+        _DATE=''
+    fi
+}
+
+#-----------------------------------------------
+# Build time (plain, no color)
+# Stores result in _TIMESTAMP
+# Format: HH:MM AM/PM
+#-----------------------------------------------
+
+fn_prompt_build_timestamp() {
+    if [ "$_USE_TIMESTAMP" = true ]; then
+        _TIMESTAMP='\D{%-I:%M %p} '
+    else
+        _TIMESTAMP=''
+    fi
+}
+
+#-----------------------------------------------
+# Build username (plain, no color)
+# Stores result in _USERNAME
+#-----------------------------------------------
+
+fn_prompt_build_username() {
+    _USERNAME='\u '
+}
+
+#-----------------------------------------------
+# Build path (plain, no color)
+# Stores result in _PATH
+# Uses _USE_FULL_PATH to determine format
+#-----------------------------------------------
+
+fn_prompt_build_path() {
+    if [ "$_USE_FULL_PATH" = true ]; then
+        _PATH='\w/'
+    else
+        _PATH='\W/'
+    fi
+}
+
+#-----------------------------------------------
+# Centralized custom prompt builder
+# Arguments:
+#   $1: use_timestamp (true/false) - show date and time
+#   $2: use_full_path (true/false) - show full path or just last dir
+#
+# Default behavior: both true
+#-----------------------------------------------
+
+fn_prompt_set() {
+    # Set temporary variables for helpers to use
+    _USE_TIMESTAMP=${1:-true}
+    _USE_FULL_PATH=${2:-true}
+    
+    # Initialize colors
+    fn_prompt_init_colors
+    
+    # Build each component (plain, without colors)
+    fn_prompt_build_date
+    fn_prompt_build_timestamp
+    fn_prompt_build_username
+    fn_prompt_build_path
+    
+    # Apply colors to each component
+    _DATE="$_COLOR_RESET""$_DATE"
+    _TIMESTAMP="$_COLOR_YELLOW""$_TIMESTAMP""$_COLOR_RESET"
+    _USERNAME="$_COLOR_GREEN""$_USERNAME"
+    _PATH="$_COLOR_BLUE""$_PATH"
+    
+    # Assemble final prompt from all colored components
+    PS1='${debian_chroot:+($debian_chroot)}'"$_DATE""$_TIMESTAMP""$_USERNAME""$_PATH""$_COLOR_RESET"' '
+    
+    # Clean up
+    fn_prompt_cleanup_color_vars
+    unset _USE_TIMESTAMP _USE_FULL_PATH _DATE _TIMESTAMP _USERNAME _PATH
+}
+
+#-----------------------------------------------
+# Convenient wrapper functions for each use case
+# These exist primarily for tab completion
+# so you can type: fn_prompt_custom<TAB>
+#-----------------------------------------------
+
+# 2025.11.28 8:47 PM utopia-starts-with-you /mnt/c/1dir/Code/repo/
+fn_prompt_custom() {
+    # Full prompt with timestamp and full path (DEFAULT)
+    fn_prompt_set true true
+}
+
+# 2025.11.28 8:48 PM utopia-starts-with-you utopia-starts-with-you/
+fn_prompt_custom_short() {
+    # Show short path, and timestamp (cleaner)
+    fn_prompt_set true false
+}
+
+# utopia-starts-with-you /mnt/c/1dir/Code/repo/utopia-starts-with-you/
+fn_prompt_custom_no_timestamp() {
+    # Show timestamp, but only current directory name
+    fn_prompt_set false true
+}
+
+# utopia-starts-with-you utopia-starts-with-you/
+fn_prompt_custom_short_no_timestamp() {
+    # Minimal: just username and current directory, no timestamp (most compact)
+    fn_prompt_set false false
+}
+
+
+#-----------------------------------------------
+# Load the default custom prompt on startup
+#-----------------------------------------------
+fn_prompt_custom

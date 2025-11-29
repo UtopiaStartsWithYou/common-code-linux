@@ -1,0 +1,52 @@
+#====================
+# Prerequisites: 
+#   ~/.bash__prompt
+#====================
+
+#=================================================================
+#                      Functions and Aliases                      
+#=================================================================
+
+
+function docker_bash () {
+    if [ $# -eq 0 ]; then
+        echo "Usage: docker_bash <container_hash>"
+        return 1
+    fi
+
+    container_hash=$1
+
+    # Check if the container exists and is running
+    if ! docker inspect --format="{{.Id}}" $container_hash &> /dev/null; then
+        echo "Container '$container_hash' not found or not running"
+        return 1
+    fi
+
+    echo 
+    echo '----------------------------------'
+    echo 'running...'
+    echo 
+    echo '   exec docker exec -it $container_hash /bin/bash'
+    echo
+    echo 'where...'
+    echo 
+    echo "   container_hash=$1"
+    echo     
+    echo '----------------------------------'
+    echo
+
+    docker exec -it $container_hash /bin/bash
+    return 1
+}
+
+alias cdc='cd /mnt/c/'
+alias 1dir='cd /mnt/c/1dir/'
+alias cdrepo='cd /mnt/c/1dir/Code/repo/'
+
+#-------------- Docker ---------------
+alias docks='docker ps | less -S'
+alias dbash=docker_bash
+
+#--------------- PS1 -----------------
+alias ps1short=fn_prompt_custom_short
+alias ps1full=fn_prompt_custom
